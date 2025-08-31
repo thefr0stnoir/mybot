@@ -1,160 +1,175 @@
 // ==UserScript==
-// @name            Agentic Find Bar Mod
-// @description     Full new floating AI-powered find bar with agentic commands for Zen Browser
-// @author          Custom Integration
-// @version         1.0
+// @name          Zen Agentic Find Bar Full Mod
+// @description   Floating AI Find Bar with agentic commands for Zen Browser
+// @version       1.0
 // ==/UserScript==
 
-(function () {
+(function() {
   "use strict";
 
-  // Your full browse-bot_browse-bot.uc.js code goes here...
-  // For brevity, here's the most important parts with modifications for agentic commands:
-
-  const browserBotfindbar = {
+  // Reference to the find bar UI and logic
+  const agenticFindBar = {
     expanded: false,
-    chatContainer: null,
-    findbar: null,
+    container: null,
+    input: null,
+    messages: null,
 
-    // Initialization - create UI, attach to DOM, events, etc.
     init() {
-      // Create floating chat/findbar container here (recreate full UI structure)
-      // This part should replicate original browse-bot findbar initialization
+      // Create UI container
+      this.container = document.createElement("div");
+      Object.assign(this.container.style, {
+        position: "fixed",
+        top: "15px",
+        right: "15px",
+        width: "320px",
+        height: "420px",
+        backgroundColor: "rgba(30, 30, 30, 0.9)",
+        color: "white",
+        fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+        fontSize: "14px",
+        borderRadius: "8px",
+        padding: "12px",
+        boxSizing: "border-box",
+        display: "none",
+        flexDirection: "column",
+        zIndex: 9999999,
+      });
 
-      // Sample UI setup (expand with real original code as needed)
-      this.chatContainer = document.createElement("div");
-      this.chatContainer.id = "agentic-findbar";
-      this.chatContainer.style.position = "fixed";
-      this.chatContainer.style.top = "10px";
-      this.chatContainer.style.right = "10px";
-      this.chatContainer.style.width = "300px";
-      this.chatContainer.style.height = "400px";
-      this.chatContainer.style.background = "rgba(0,0,0,0.8)";
-      this.chatContainer.style.color = "white";
-      this.chatContainer.style.zIndex = 999999;
-      this.chatContainer.style.display = "none";
-      this.chatContainer.style.flexDirection = "column";
-      this.chatContainer.style.borderRadius = "8px";
-      this.chatContainer.style.padding = "10px";
-      this.chatContainer.style.fontFamily = "Arial, sans-serif";
-      this.chatContainer.style.fontSize = "14px";
+      // Messages container
+      this.messages = document.createElement("div");
+      Object.assign(this.messages.style, {
+        flexGrow: "1",
+        overflowY: "auto",
+        marginBottom: "10px",
+        padding: "6px",
+        backgroundColor: "rgba(50, 50, 50, 0.6)",
+        borderRadius: "6px",
+      });
+      this.container.appendChild(this.messages);
 
-      // Append UI to document body
-      document.body.appendChild(this.chatContainer);
+      // Input box
+      this.input = document.createElement("input");
+      this.input.type = "text";
+      this.input.placeholder = "Ask AI or enter command...";
+      Object.assign(this.input.style, {
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "none",
+        outline: "none",
+        fontSize: "14px",
+      });
+      this.container.appendChild(this.input);
 
-      // Build input box and messages container:
-      this.inputBox = document.createElement("input");
-      this.inputBox.type = "text";
-      this.inputBox.placeholder = "Ask AI here...";
-      this.inputBox.style.width = "100%";
-      this.inputBox.style.padding = "8px";
-      this.inputBox.style.marginBottom = "10px";
-      this.chatContainer.appendChild(this.inputBox);
-
-      this.messagesDiv = document.createElement("div");
-      this.messagesDiv.style.flex = "1 1 auto";
-      this.messagesDiv.style.overflowY = "auto";
-      this.messagesDiv.style.background = "rgba(255,255,255,0.1)";
-      this.messagesDiv.style.borderRadius = "6px";
-      this.messagesDiv.style.padding = "10px";
-      this.chatContainer.appendChild(this.messagesDiv);
-
-      // Input enter key will trigger sendMessage
-      this.inputBox.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && this.inputBox.value.trim().length) {
-          this.sendMessage(this.inputBox.value.trim());
-          this.inputBox.value = "";
+      // Enter key event to send message
+      this.input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && this.input.value.trim()) {
+          this.sendMessage(this.input.value.trim());
+          this.input.value = "";
+        } else if (e.key === "Escape") {
+          this.toggle();
         }
       });
 
-      // To toggle findbar by shortcut (Ctrl+Shift+F for example)
+      document.body.appendChild(this.container);
+
+      // Toggle visibility with Ctrl+Shift+F
       window.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
           this.toggle();
         }
       });
-
-      // Initial hidden state
-      this.hide();
     },
 
     show() {
-      this.chatContainer.style.display = "flex";
-      this.inputBox.focus();
+      this.container.style.display = "flex";
+      this.input.focus();
       this.expanded = true;
     },
 
     hide() {
-      this.chatContainer.style.display = "none";
+      this.container.style.display = "none";
       this.expanded = false;
     },
 
     toggle() {
-      if(this.expanded) this.hide();
+      if (this.expanded) this.hide();
       else this.show();
     },
 
-    addChatMessage(text, sender = "ai") {
+    addMessage(text, sender = "ai") {
       const msgDiv = document.createElement("div");
-      msgDiv.style.padding = "6px";
-      msgDiv.style.margin = "4px 0";
-      msgDiv.style.borderRadius = "4px";
-      if(sender === "user") {
-        msgDiv.style.backgroundColor = "#2a8fbd";
+      msgDiv.style.margin = "6px 0";
+      msgDiv.style.padding = "8px";
+      msgDiv.style.borderRadius = "6px";
+      msgDiv.style.maxWidth = "90%";
+      msgDiv.style.wordBreak = "break-word";
+      if (sender === "user") {
+        msgDiv.style.backgroundColor = "#007acc";
         msgDiv.style.alignSelf = "flex-end";
+        msgDiv.style.color = "#fff";
       } else {
-        msgDiv.style.backgroundColor = "#555";
+        msgDiv.style.backgroundColor = "#444";
+        msgDiv.style.color = "#ddd";
         msgDiv.style.alignSelf = "flex-start";
       }
-      msgDiv.textContent = typeof text === "string" ? text : JSON.stringify(text);
-      this.messagesDiv.appendChild(msgDiv);
-      this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+      msgDiv.textContent = text;
+      this.messages.appendChild(msgDiv);
+      this.messages.scrollTop = this.messages.scrollHeight;
     },
 
     async sendMessage(prompt) {
-      if (!prompt) return;
+      this.addMessage(prompt, "user");
 
-      this.addChatMessage(prompt, "user");
-
-      // Show loading message (optional)
-      const loadingMsg = document.createElement("div");
-      loadingMsg.textContent = "Loading...";
-      loadingMsg.style.fontStyle = "italic";
-      this.messagesDiv.appendChild(loadingMsg);
-      this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+      // Show loading indicator
+      const loadingDiv = document.createElement("div");
+      loadingDiv.textContent = "Thinking...";
+      loadingDiv.style.fontStyle = "italic";
+      this.messages.appendChild(loadingDiv);
+      this.messages.scrollTop = this.messages.scrollHeight;
 
       try {
-        // Simulate or replace with real AI backend call (Gemini, Mistral)
-        // For demo, delay & echo:
-        const simulatedResponse = await new Promise(res => setTimeout(() => res(`You said: ${prompt}`), 1200));
+        // Replace with your real API call here:
+        // Simulated response delay and echo example:
+        const simulatedReply = await new Promise((res) => {
+          setTimeout(() => res("You asked: " + prompt), 1200);
+        });
 
-        // Remove loading message
-        loadingMsg.remove();
+        loadingDiv.remove();
 
-        this.addChatMessage(simulatedResponse, "ai");
+        this.addMessage(simulatedReply, "ai");
 
-        const text = simulatedResponse.toLowerCase();
+        // Agentic command parsing:
+        const text = simulatedReply.toLowerCase();
 
-        // Agentic commands parse example
         if (text.includes("open youtube")) {
-          const searchTerm = text.split("open youtube")[1]?.trim() || "";
-          const url = "https://www.youtube.com/results?search_query=" + encodeURIComponent(searchTerm);
+          const query = text.split("open youtube")[1]?.trim() || prompt;
+          const url = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
           window.open(url, "_blank");
+        } else if (text.includes("open reddit")) {
+          const query = text.split("open reddit")[1]?.trim() || prompt;
+          const url = "https://www.reddit.com/search/?q=" + encodeURIComponent(query);
+          window.open(url, "_blank");
+        } else if (text.includes("open new tab") || text.includes("open tab")) {
+          const urlMatch = simulatedReply.match(/(https?:\/\/[^\s]+)/i);
+          if (urlMatch) window.open(urlMatch[0], "_blank");
         }
-        // TODO: Add other agentic commands here...
+        // Add more agentic commands here as desired...
 
-      } catch (e) {
-        this.addChatMessage(`Error: ${e.message}`, "ai");
+      } catch (error) {
+        loadingDiv.remove();
+        this.addMessage("Error: " + error.message, "ai");
       }
     },
   };
 
-  // Initialize the findbar on page load
-  window.addEventListener("load", () => {
-    browserBotfindbar.init();
-  });
+  // Initialize on DOM ready
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    agenticFindBar.init();
+  } else {
+    window.addEventListener("DOMContentLoaded", () => agenticFindBar.init());
+  }
 
-  // Expose for console testing or manual toggle
-  window.browserBotfindbar = browserBotfindbar;
-
+  // Expose for debugging
+  window.agenticFindBar = agenticFindBar;
 })();
